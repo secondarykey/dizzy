@@ -1,13 +1,13 @@
 package main
 
 import (
-	"strings"
-	"fmt"
-	"time"
-	"os"
-	"io"
 	"bytes"
+	"fmt"
 	"go/format"
+	"io"
+	"os"
+	"strings"
+	"time"
 )
 
 const KindAccessSuffix = "_access.go"
@@ -17,20 +17,21 @@ const DizzyGlobalFile = "dizzy.go"
 var genFiles []string
 
 func addGeneratedFile(name string) {
-	genFiles = append(genFiles,name)
+	genFiles = append(genFiles, name)
 }
+
 //ファイル出力
 //.goファイルはfmtを行う
-func generate(dst,tmplName string,dto interface{}) error {
+func generate(dst, tmplName string, dto interface{}) error {
 
-	tmpl,err := createGenerateTemplate(tmplName)
+	tmpl, err := createGenerateTemplate(tmplName)
 	if err != nil {
 		return err
 	}
 
 	gofmt := false
 	// go files go fmt generate
-	if strings.LastIndex(dst,".go") != -1 {
+	if strings.LastIndex(dst, ".go") != -1 {
 		gofmt = true
 	}
 
@@ -53,8 +54,8 @@ func generate(dst,tmplName string,dto interface{}) error {
 	}
 
 	//Goファイルの場合
-	if byt,ok := writer.(*bytes.Buffer) ; ok {
-		dstByt,err := format.Source(byt.Bytes())
+	if byt, ok := writer.(*bytes.Buffer); ok {
+		dstByt, err := format.Source(byt.Bytes())
 		if err != nil {
 			return err
 		}
@@ -65,7 +66,7 @@ func generate(dst,tmplName string,dto interface{}) error {
 		}
 		defer newW.Close()
 
-		_,err = newW.Write(dstByt)
+		_, err = newW.Write(dstByt)
 		if err != nil {
 			return err
 		}
@@ -76,11 +77,11 @@ func generate(dst,tmplName string,dto interface{}) error {
 	return nil
 }
 
-func generateAccessFile(src string,packageName string,kinds []*Kind) error {
+func generateAccessFile(src string, packageName string, kinds []*Kind) error {
 
-	idx := strings.LastIndex(src,".go")
+	idx := strings.LastIndex(src, ".go")
 	if idx == -1 {
-		return fmt.Errorf("[%s] is not go file",src)
+		return fmt.Errorf("[%s] is not go file", src)
 	}
 
 	dst := src[:idx] + KindAccessSuffix
@@ -91,19 +92,18 @@ func generateAccessFile(src string,packageName string,kinds []*Kind) error {
 	}{packageName, kinds}
 
 	//generate _access.go
-	err := generate(dst,AccessTemplateFile,dto)
+	err := generate(dst, AccessTemplateFile, dto)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+func generateHandlerFile(src, pname string, kinds []*Kind) error {
 
-func generateHandlerFile(src ,pname string, kinds []*Kind) error {
-
-	idx := strings.LastIndex(src,".go")
+	idx := strings.LastIndex(src, ".go")
 	if idx == -1 {
-		return fmt.Errorf("Not Found go file[%s]\n",src)
+		return fmt.Errorf("Not Found go file[%s]\n", src)
 	}
 
 	dstGo := src[:idx] + KindHandlerSuffix
@@ -112,7 +112,7 @@ func generateHandlerFile(src ,pname string, kinds []*Kind) error {
 		PackageName string
 		Kinds       []*Kind
 	}{pname, kinds}
-	err := generate(dstGo,HandlerGoTemplateFile,dto)
+	err := generate(dstGo, HandlerGoTemplateFile, dto)
 	if err != nil {
 		return err
 	}
@@ -123,33 +123,32 @@ func generateTemplateFiles(src string, kinds []*Kind) error {
 
 	dir := "templates"
 
-	//TODO MultiOS
-	idx := strings.LastIndex(src,"\\")
-	mkdir := src[:idx+1] + dir
+	pwd := filepath.Dir(src)
+	mkdir := pwd + "/" + dir
 
-	if _,err := os.Stat(mkdir); os.IsNotExist(err) {
-		err := os.Mkdir(mkdir,0777)
+	if _, err := os.Stat(mkdir); os.IsNotExist(err) {
+		err := os.Mkdir(mkdir, 0777)
 		if err != nil {
 			return err
 		}
 	}
 
 	var err error
-	for _,elm := range kinds {
+	for _, elm := range kinds {
 
 		dto := struct {
-			Kind  *Kind
+			Kind    *Kind
 			Created time.Time
-		} {elm,time.Now()}
+		}{elm, time.Now()}
 
 		viewName := "view_" + elm.KindName + ".tmpl"
-		err = generate(mkdir + "/" + viewName,ViewTemplateFile,dto)
+		err = generate(mkdir+"/"+viewName, ViewTemplateFile, dto)
 		if err != nil {
 			return err
 		}
 
 		editName := "edit_" + elm.KindName + ".tmpl"
-		err = generate(mkdir + "/" + editName,EditTemplateFile,dto)
+		err = generate(mkdir+"/"+editName, EditTemplateFile, dto)
 		if err != nil {
 			return err
 		}
@@ -158,7 +157,7 @@ func generateTemplateFiles(src string, kinds []*Kind) error {
 	return nil
 }
 
-func generateRootTemplateFiles(dst string,kinds []*Kind) error {
+func generateRootTemplateFiles(dst string, kinds []*Kind) error {
 
 	var err error
 	dto := struct {
@@ -167,45 +166,45 @@ func generateRootTemplateFiles(dst string,kinds []*Kind) error {
 
 	dst += "/templates"
 
-	err = generate(dst + "/layout.tmpl",LayoutTemplateFile,dto)
+	err = generate(dst+"/layout.tmpl", LayoutTemplateFile, dto)
 	if err != nil {
 		return err
 	}
 
-	err = generate(dst + "/top.tmpl",TopTemplateFile,dto)
+	err = generate(dst+"/top.tmpl", TopTemplateFile, dto)
 	if err != nil {
 		return err
 	}
 
-	err = generate(dst + "/error.tmpl",ErrorTemplateFile,dto)
+	err = generate(dst+"/error.tmpl", ErrorTemplateFile, dto)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func generateAppEngineFiles(dir string,kinds []*Kind) error {
+func generateAppEngineFiles(dir string, kinds []*Kind) error {
 
 	dto := struct {
-		Kinds       []*Kind
+		Kinds []*Kind
 	}{kinds}
-	err := generate(dir + "/dizzy_app.yaml",AppTemplateFile,dto)
+	err := generate(dir+"/dizzy_app.yaml", AppTemplateFile, dto)
 	if err != nil {
 		return err
 	}
 
-	err = generate(dir + "/index.yaml",IndexTemplateFile,dto)
+	err = generate(dir+"/index.yaml", IndexTemplateFile, dto)
 	return err
 }
 
-func generateDizzyFile(dir,pname string,kinds []*Kind) error {
+func generateDizzyFile(dir, pname string, kinds []*Kind) error {
 
 	dto := struct {
 		PackageName string
 		Kinds       []*Kind
 	}{pname, kinds}
 
-	err := generate(dir + "/" + DizzyGlobalFile,DizzyGoTemplateFile,dto)
+	err := generate(dir+"/"+DizzyGlobalFile, DizzyGoTemplateFile, dto)
 
 	return err
 }
