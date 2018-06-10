@@ -124,20 +124,14 @@ func generateTemplateFiles(src string, kinds []*Kind) error {
 
 	dir := "templates"
 
-	fmt.Println(src)
-
 	pwd := filepath.Dir(src)
 	mkdir := pwd + "/" + dir
 
-	fmt.Println(mkdir)
 	if _, err := os.Stat(mkdir); os.IsNotExist(err) {
-		fmt.Println("isNotExist")
 		err := os.Mkdir(mkdir, 0777)
 		if err != nil {
 			return err
 		}
-	} else {
-		fmt.Println("???")
 	}
 
 	var err error

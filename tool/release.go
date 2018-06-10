@@ -1,22 +1,22 @@
 package main
 
 import (
-	"text/template"
-	"log"
-	"os"
-	"io/ioutil"
-	"time"
 	"flag"
 	"fmt"
-	"strings"
+	"io/ioutil"
+	"log"
+	"os"
 	"os/exec"
+	"strings"
+	"text/template"
+	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"bufio"
+	"github.com/fsnotify/fsnotify"
 	"sync/atomic"
 )
 
-func init () {
+func init() {
 }
 
 func main() {
@@ -40,8 +40,9 @@ func main() {
 }
 
 var lockVal int64
+
 func lock() bool {
-	atomic.AddInt64(&lockVal,1)
+	atomic.AddInt64(&lockVal, 1)
 	if lockVal == 1 {
 		return true
 	}
@@ -50,7 +51,7 @@ func lock() bool {
 }
 
 func unlock() {
-	atomic.AddInt64(&lockVal,-1)
+	atomic.AddInt64(&lockVal, -1)
 }
 
 func monitor() error {
@@ -61,11 +62,11 @@ func monitor() error {
 	}
 	defer watcher.Close()
 
-	err = register(watcher,"./",".go")
+	err = register(watcher, "./", ".go")
 	if err != nil {
 		return nil
 	}
-	err = register(watcher,"./templates/",".tmpl")
+	err = register(watcher, "./templates/", ".tmpl")
 	if err != nil {
 		return nil
 	}
@@ -74,18 +75,18 @@ func monitor() error {
 	go func() {
 		for {
 			select {
-			case event:= <-watcher.Events:
+			case event := <-watcher.Events:
 
 				switch {
 				case event.Op&fsnotify.Rename == fsnotify.Rename,
-						event.Op&fsnotify.Create == fsnotify.Create ,
-					event.Op&fsnotify.Remove == fsnotify.Remove ,
-					event.Op&fsnotify.Write == fsnotify.Write :
+					event.Op&fsnotify.Create == fsnotify.Create,
+					event.Op&fsnotify.Remove == fsnotify.Remove,
+					event.Op&fsnotify.Write == fsnotify.Write:
 
 					if lock() {
-						if strings.Index(event.Name,".go") != -1 {
+						if strings.Index(event.Name, ".go") != -1 {
 							runTest()
-						} else if strings.Index(event.Name,".tmpl") != -1 {
+						} else if strings.Index(event.Name, ".tmpl") != -1 {
 							runRelease()
 							runTest()
 						}
@@ -93,7 +94,7 @@ func monitor() error {
 					unlock()
 
 				}
-			case err:= <-watcher.Errors:
+			case err := <-watcher.Errors:
 				done <- err
 			}
 		}
@@ -110,7 +111,7 @@ func monitor() error {
 
 func runTest() {
 	log.Println("#### Run Test")
-	cmd := exec.Command("go", "test","-v","-count=1","-cover",".")
+	cmd := exec.Command("go", "test", "-v", "-count=1", "-cover", ".")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
@@ -130,12 +131,12 @@ func runRelease() {
 	gen()
 }
 
-func register(watcher *fsnotify.Watcher,dir string,ext string) error {
-	infos,err := ioutil.ReadDir(dir)
+func register(watcher *fsnotify.Watcher, dir string, ext string) error {
+	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return err
 	}
-	for _,info := range infos {
+	for _, info := range infos {
 		if info.IsDir() {
 			continue
 		}
@@ -143,9 +144,9 @@ func register(watcher *fsnotify.Watcher,dir string,ext string) error {
 		if n == "template.go" {
 			continue
 		}
-		idx := strings.Index(n,ext)
+		idx := strings.Index(n, ext)
 		if idx != -1 {
-			a := dir +  n
+			a := dir + n
 			err = watcher.Add(a)
 			if err != nil {
 				return err
@@ -157,13 +158,13 @@ func register(watcher *fsnotify.Watcher,dir string,ext string) error {
 
 func gen() error {
 	//テストなどで出力してある各ファイルを削除
-	file,err := os.OpenFile("template.go",os.O_WRONLY|os.O_CREATE,0644)
+	file, err := os.OpenFile("template.go", os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	tmpl,err := template.ParseFiles("templates/template.tmpl")
+	tmpl, err := template.ParseFiles("templates/template.tmpl")
 	if err != nil {
 		return err
 	}
@@ -179,25 +180,25 @@ func gen() error {
 	top := getFile("templates/top.tmpl")
 	view := getFile("templates/view.tmpl")
 
-	dto := struct{
-		Flag bool
-		Created time.Time
-		DizzyGo string
-		GenGo string
-		HandlerGo string
+	dto := struct {
+		Flag           bool
+		Created        time.Time
+		DizzyGo        string
+		GenGo          string
+		HandlerGo      string
 		LayoutTemplate string
-		TopTemplate string
-		EditTemplate string
-		ViewTemplate string
-		ErrorTemplate string
-		AppTemplate string
-		IndexTemplate string
-	}{false,time.Now(),
-	string(dizzy),string(gen),string(handler),
-	string(layout),string(top),string(edit),string(view),string(errView),
-	string(app),string(index)}
+		TopTemplate    string
+		EditTemplate   string
+		ViewTemplate   string
+		ErrorTemplate  string
+		AppTemplate    string
+		IndexTemplate  string
+	}{false, time.Now(),
+		string(dizzy), string(gen), string(handler),
+		string(layout), string(top), string(edit), string(view), string(errView),
+		string(app), string(index)}
 
-	err = tmpl.Execute(file,dto)
+	err = tmpl.Execute(file, dto)
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func gen() error {
 }
 
 func getFile(name string) []byte {
-	dizzy,err := ioutil.ReadFile(name)
+	dizzy, err := ioutil.ReadFile(name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -227,7 +228,7 @@ func removeWork() {
 
 	work := "examples/"
 
-	p:= work + "templates"
+	p := work + "templates"
 	//削除
 	err := os.RemoveAll(p)
 	if err != nil {
@@ -236,6 +237,7 @@ func removeWork() {
 		fmt.Println("\tNot exists:" + p)
 	}
 
+	remove("sample_access.go")
 	remove("sample_handler.go")
 	remove("dizzy.go")
 	remove("dizzy_app.yaml")
@@ -251,4 +253,3 @@ func remove(f string) {
 		fmt.Println("\tNot exists:" + p)
 	}
 }
-
