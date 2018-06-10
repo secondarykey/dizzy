@@ -1,0 +1,65 @@
+{{ "{{define \"title\"}}" }}
+{{ .Kind.KindName }} Edit[dizzy auto generated:{{generated}}
+{{ "{{end}}" }}
+
+{{ "{{define \"content\"}}" }}
+<form method="post" action="/_dizzy/{{.Kind.URL}}/update" onsubmit="return confirm('realy?');">
+
+<input type="hidden" name="Version" value="{{ "{{ .Kind.Version }}" }}">
+
+{{ "{{ if not .Kind.Key }}" }}
+<input type="hidden" name="keyId" value="">
+{{ "{{ else }}" }}
+<input type="hidden" name="keyId" value="{{"{{.Kind.Key.StringID}}"}}">
+{{ "{{ end }}" }}
+
+  <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+    <tr>
+        <th class="mdl-data-table__cell--non-numeric">
+{{ "{{ if not .Kind.Key }}" }}
+        New {{ .Kind.KindName }}
+{{ "{{ else }}" }}
+        Key : {{ "{{ .Kind.Key.StringID }}" }}
+{{ "{{ end }}" }}
+        </th>
+    </tr>
+    <tbody>
+
+{{ range .Kind.Fields }}
+
+      <tr>
+        <td style="text-align:center;">
+<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+
+{{ generateInputHTML . }}
+
+<!--
+          <input class="mdl-textfield__input" type="text" name="{{.Name}}" id="{{.Name}}" value="{{"{{"}} .Kind.{{.Name}} {{"}}"}}"
+{{ if eq .Type 10 }}
+           pattern="-?[0-9]*(\.[0-9]+)?"
+{{ end }}
+          />
+          <label class="mdl-textfield__label" for="{{.Name}}">{{.Name}}...</label>
+{{ if eq .Type 10 }}
+          <span class="mdl-textfield__error">Input is not a number!</span>
+{{ end }}
+-->
+
+</div>
+        </td>
+      </tr>
+
+{{ end }}
+      <tr>
+        <td>
+          <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--icon mdl-button--primary">
+            <i class="material-icons">save</i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+
+{{ "{{ end }}" }}
+

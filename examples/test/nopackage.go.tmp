@@ -1,0 +1,6 @@
+import "github.com/knightso/base/gae/ds"
+
+//+DIZZY(key=string,cache=false,content=text,limit=10,content=none)
+type WorkType struct{
+	ds.Meta
+}

@@ -1,0 +1,15 @@
+{{ "{{define \"title\"}}" }}
+
+{{ "{{ .Title }}[{{ .Number }}]" }}
+
+{{ "{{end}}" }}
+
+{{ "{{define \"content\"}}" }}
+<ul>
+{{ "{{ range .Description }}" }}
+    <li>{{ "{{.}}" }}</li>
+{{ "{{ end }}" }}
+</ul>
+
+<h7> dizzy auto generated:{{generated}} </h7>
+{{ "{{ end }}" }}

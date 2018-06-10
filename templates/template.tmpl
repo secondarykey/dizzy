@@ -1,0 +1,92 @@
+package main
+
+//dizzy release generated:{{.Created}}
+
+import (
+    "fmt"
+    "time"
+    "text/template"
+)
+
+const TemplateDirectory = "templates"
+
+//developer mode
+const UseTemplateFile = {{.Flag}}
+
+const AppTemplateFile = "app.tmpl"
+const AppTemplate = `{{.AppTemplate}}`
+
+const DizzyGoTemplateFile =  "dizzy.tmpl"
+const DizzyGoTemplate = `{{.DizzyGo}}`
+
+const EditTemplateFile =  "edit.tmpl"
+const EditTemplate = `{{.EditTemplate}}`
+
+const ErrorTemplateFile =  "error.tmpl"
+const ErrorTemplate = `{{.ErrorTemplate}}`
+
+const AccessTemplateFile = "access.tmpl"
+const AccessTemplate = `{{.GenGo}}`
+
+const HandlerGoTemplateFile =  "handler.tmpl"
+const HandlerGoTemplate = `{{.HandlerGo}}`
+
+const IndexTemplateFile = "index.tmpl"
+const IndexTemplate = `{{.IndexTemplate}}`
+
+const LayoutTemplateFile =  "layout.tmpl"
+const LayoutTemplate = `{{.LayoutTemplate}}`
+
+const TopTemplateFile = "top.tmpl"
+const TopTemplate = `{{.TopTemplate}}`
+
+const ViewTemplateFile =  "view.tmpl"
+const ViewTemplate = `{{.ViewTemplate}}`
+
+var TemplateStringMap map[string]string
+
+func init() {
+
+    TemplateStringMap = make(map[string]string)
+
+    TemplateStringMap[AppTemplateFile] = AppTemplate
+    TemplateStringMap[DizzyGoTemplateFile] = DizzyGoTemplate
+    TemplateStringMap[EditTemplateFile] = EditTemplate
+    TemplateStringMap[ErrorTemplateFile] = ErrorTemplate
+    TemplateStringMap[AccessTemplateFile] = AccessTemplate
+    TemplateStringMap[HandlerGoTemplateFile] = HandlerGoTemplate
+    TemplateStringMap[IndexTemplateFile] = IndexTemplate
+    TemplateStringMap[LayoutTemplateFile] = LayoutTemplate
+    TemplateStringMap[TopTemplateFile] = TopTemplate
+    TemplateStringMap[ViewTemplateFile] = ViewTemplate
+}
+
+func generated() string {
+	t := time.Now()
+    if t.IsZero() {
+        return "None"
+    }
+    return t.Format(time.RFC3339)
+}
+
+func createGenerateTemplate(name string) (*template.Template,error ) {
+
+    funcMap := template.FuncMap{
+        "generateInputHTML" : GenerateInputHTML,
+        "generated" : generated,
+    }
+    var tmpl *template.Template
+    var err error
+    if UseTemplateFile {
+        f := TemplateDirectory + "/" + name
+        tmpl, err = template.New(name).Funcs(funcMap).ParseFiles(f)
+    } else {
+        val,ok := TemplateStringMap[name]
+        if !ok {
+            return nil, fmt.Errorf("TemplateStringMap not exists[%s]\n",name)
+        }
+        tmpl, err = template.New(name).Funcs(funcMap).Parse(val)
+    }
+
+    return tmpl,err
+}

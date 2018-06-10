@@ -1,0 +1,82 @@
+package {{.PackageName}}
+
+//dizzy auto generated:{{generated}}
+
+import (
+	"log"
+    "html/template"
+    "net/http"
+    "time"
+
+	"github.com/gorilla/mux"
+)
+
+const TEMPLATE_DIR = "templates/"
+
+func init() {
+
+    r := mux.NewRouter()
+
+    r.HandleFunc("/_dizzy/",view)
+
+{{range .Kinds}}
+    h{{.TypeName}} := {{.TypeName}}Handler{}
+    r.HandleFunc("/_dizzy/{{.URL}}/",h{{.TypeName}}.view).Methods("GET")
+    r.HandleFunc("/_dizzy/{{.URL}}/create",h{{.TypeName}}.create).Methods("GET")
+    r.HandleFunc("/_dizzy/{{.URL}}/edit",h{{.TypeName}}.edit).Methods("POST")
+    r.HandleFunc("/_dizzy/{{.URL}}/update",h{{.TypeName}}.update).Methods("POST")
+    r.HandleFunc("/_dizzy/{{.URL}}/delete",h{{.TypeName}}.delete).Methods("POST")
+{{end}}
+
+	http.Handle("/",r)
+}
+
+func view(w http.ResponseWriter,r *http.Request)  {
+    dto := struct{}{}
+    parse(w,"top.tmpl",dto)
+}
+
+func convertDate(t *time.Time) string {
+	if t.IsZero() {
+		return "None"
+	}
+	jst, _ := time.LoadLocation("Asia/Tokyo")
+	jt := t.In(jst)
+	return jt.Format("2006/01/02 15:04:05")
+}
+
+func errorPage(w http.ResponseWriter,status int,title string,name... string) {
+
+    w.WriteHeader(status)
+    dto := struct {
+        Title string
+        Description []string
+        Number int
+    } {title,name,status}
+
+    parse(w,"error.tmpl",dto)
+    return
+}
+
+
+func parse(w http.ResponseWriter,tmplName string,dto interface{}) {
+
+    funcMap := template.FuncMap{
+        "convertDate":convertDate,
+    }
+    tmpl,err := template.New("layout").Funcs(funcMap).ParseFiles(TEMPLATE_DIR+"layout.tmpl",TEMPLATE_DIR+tmplName)
+    if err != nil {
+        w.WriteHeader(500)
+        log.Println("Template Parse Error",err.Error())
+        return
+    }
+
+    err = tmpl.Execute(w,dto)
+    if err != nil {
+        w.WriteHeader(500)
+        log.Println("Template Execute Error",err.Error())
+        return
+    }
+    w.WriteHeader(200)
+    return
+}

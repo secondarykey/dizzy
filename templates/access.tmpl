@@ -1,0 +1,230 @@
+package {{.PackageName}}
+
+//dizzy auto generated:{{generated}}
+
+import (
+    "fmt"
+    "net/http"
+    "strconv"
+
+	"github.com/satori/go.uuid"
+	"github.com/knightso/base/gae/ds"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/memcache"
+)
+
+func init() {
+{{ range .Kinds }}
+    ds.CacheKinds["{{ .KindName }}"] = {{ .Cache }}
+{{ end }}
+}
+
+{{ range .Kinds }}
+
+const KIND_{{ .KindName }} = "{{ .KindName }}"
+
+func (s *{{.TypeName}}) GenerateKey(r *http.Request) error {
+	uid, err := uuid.NewV4()
+	if err != nil {
+	    return err
+	}
+	id := uid.String()
+	key := s.CreateKey(r,id)
+	s.SetKey(key)
+
+	return nil
+}
+
+func (s *{{.TypeName}}) CreateKey(r *http.Request,id string) *datastore.Key {
+	c := appengine.NewContext(r)
+   	return datastore.NewKey(c, KIND_{{ .KindName }}, id, 0, nil)
+}
+
+func (s *{{.TypeName}}) Select(r *http.Request,p int) ([]{{.TypeName}},error) {
+    //UpdatedAt,Deletedによる検索
+   	rtn := make([]{{.TypeName}},0)
+
+    c := appengine.NewContext(r)
+    cursor := ""
+
+    q := datastore.NewQuery(KIND_{{.KindName}}).Order("- UpdatedAt").Filter("Deleted=",false)
+    if  p > 0 {
+    	item, err := memcache.Get(c, s.getCursorName(p))
+    	if err == nil {
+    		cursor = string(item.Value)
+    	}
+    	q = q.Limit({{.Limit}})
+    	if cursor != "" {
+    		cur, err := datastore.DecodeCursor(cursor)
+    		if err == nil {
+    			q  = q.Start(cur)
+    		}
+    	}
+    }
+
+   	t := q.Run(c)
+   	for {
+   		var d {{.TypeName}}
+   		key, err := t.Next(&d)
+   		if err == datastore.Done {
+   			break
+   		}
+   	    //TODO どうするか？
+       	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
+       		if err != nil {
+       			return nil,err
+       		}
+       	}
+   		d.SetKey(key)
+   		rtn = append(rtn, d)
+   	}
+
+   	if p > 0 {
+   		cur,err := t.Cursor()
+   		if err != nil {
+   			return nil,err
+   		}
+
+   		err = memcache.Set(c,&memcache.Item{
+   			Key:s.getCursorName(p+1),
+   			Value:[]byte(cur.String()),
+   		})
+   		if err != nil {
+   			return nil,err
+   		}
+   	}
+
+   	return rtn, nil
+}
+
+func (s *{{.TypeName}}) getCursorName(p int) string {
+	return "{{ .KindName }}_cursor_"+strconv.Itoa(p)
+}
+
+func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
+    //データを検索
+    key := s.CreateKey(r,id)
+	c := appengine.NewContext(r)
+	//自身に設定する
+    err := ds.Get(c,key,s)
+    //TODO どうするか？
+	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {
+    //データを検索
+    key := s.CreateKey(r,id)
+	c := appengine.NewContext(r)
+	//自身に設定する
+    err := ds.GetWithVersion(c,key,version,s)
+    //TODO どうするか？
+	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
+func (s *{{.TypeName}}) Put(r *http.Request) error {
+	c := appengine.NewContext(r)
+	return ds.Put(c,s)
+}
+
+func (s *{{.TypeName}}) Delete(r *http.Request) error {
+	var err error
+	c := appengine.NewContext(r)
+	err = ds.Delete(c,s.GetKey())
+	if err != nil {
+		return err
+	}
+{{ if ne .Content 0 }}
+{{ end }}
+  return nil
+}
+
+func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
+
+    var err error
+    s.Deleted = true
+    err = s.Put(r)
+    if err != nil {
+        return err
+    }
+
+{{ if ne .Content 0}}
+{{ end }}
+
+  return nil
+}
+
+func (s *{{.TypeName}}) SetDefault() (err error) {
+
+
+{{ range .Fields }}
+    {{ if eq .Display true }}
+
+    {{ end }}
+{{ end }}
+
+    return nil
+}
+
+func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
+
+{{ range .Fields }}
+
+    {{ if eq .Editable true }}
+
+        {{ if eq .Type 10 }}
+            s.{{ .Name }},err = strconv.Atoi(r.FormValue("{{.Name}}"))
+            if err != nil {
+                return fmt.Errorf("[%s] is int value.[%s]","{{.Name}}",r.FormValue("{{.Name}}"))
+            }
+        {{ else if eq .Type 20 }}
+        {{ else if eq .Type 30 }}
+        {{ else if eq .Type 50 }}
+            s.{{ .Name }} = r.FormValue("{{.Name}}")
+        {{ end }}
+
+    {{ end }}
+{{ end }}
+    return nil
+}
+
+{{ if ne .Content 0 }}
+
+//コンテンツデータが存在する場合
+type {{.TypeName}}Data struct {
+	key     *datastore.Key
+	Content []byte
+}
+
+//子のキー作成
+func (d *{{ .TypeName }}Data) GetKey() *datastore.Key {
+	return d.key
+}
+
+func (d *{{ .TypeName }}Data) SetKey(k *datastore.Key) {
+	d.key = k
+}
+
+//同時にコンテンツを生成する場合
+func (s *{{.TypeName}}) Put(content []byte) error {
+    //
+    s.Put()
+    //ページャに対する検索
+}
+
+{{ end }}
+
+{{ end }}
+

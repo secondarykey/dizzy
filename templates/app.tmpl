@@ -1,0 +1,12 @@
+runtime: go
+api_version: go1
+
+# dizzy auto generated:{{generated}}
+
+handlers:
+  - url: /_dizzy/.*
+    script: _go_app
+    login: admin
+    secure: always
+  - url: /.*
+    script: _go_app

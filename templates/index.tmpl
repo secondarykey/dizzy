@@ -1,0 +1,12 @@
+indexes:
+
+# dizzy auto generated:{{generated}}
+
+{{ range .Kinds }}
+- kind: {{ .KindName }}
+  properties:
+  - name: Deleted
+  - name: UpdatedAt
+    direction: desc
+{{ end }}
+

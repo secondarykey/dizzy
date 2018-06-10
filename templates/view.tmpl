@@ -1,0 +1,95 @@
+{{ "{{define \"title\"}} "}}
+{{ .Kind.KindName }} View[dizzy auto generated:{{generated}}]
+{{ "{{end}}" }}
+
+{{ "{{define \"content\"}}" }}
+<table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+  <thead>
+    <tr>
+
+      <th class="mdl-data-table__cell--non-numeric">
+      {{ "{{if ne .Prev 0}}" }}
+              <a href="/_dizzy/{{.Kind.URL}}/?page={{"{{.Prev}}"}}" title="Older">
+                <button class="mdl-button mdl-button--icon  mdl-button--primary">
+                   <i class="material-icons md-dark">arrow_back</i>
+                </button>
+              </a>
+      {{ "{{end}}" }}
+      </th>
+{{ range .Kind.Fields }}
+
+{{ if eq .Display true }}
+        <th
+{{if ne .Type 10}}
+        {{ "class=\"mdl-data-table__cell--non-numeric\"" }}
+{{end}}
+        >
+      {{ .Name }} </th>
+{{ end }}
+
+{{ end }}
+
+      <th class="mdl-data-table__cell--non-numeric">Create/Update</th>
+
+      <th>
+      {{ "{{if ne .Max true}}" }}
+              <a href="/_dizzy/{{.Kind.URL}}/?page={{"{{.Next}}"}}" title="Newer">
+                <button class="mdl-button mdl-button--icon  mdl-button--primary">
+                  <i class="material-icons md-dark" role="presentation">arrow_forward</i>
+                </button>
+              </a>
+      {{ "{{ end }}" }}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+
+{{ "{{ range .List}}" }}
+    <tr>
+        <td class="mdl-data-table__cell--non-numeric">
+        <form method="post" action="/_dizzy/{{.Kind.URL}}/edit">
+          <input type="hidden" name="keyId" value="{{"{{.Key.StringID}}"}}" />
+          <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--icon mdl-button--primary">
+            <i class="material-icons">edit</i>
+          </button>
+        </form>
+      </td>
+
+{{ range .Kind.Fields }}
+{{ if eq .Display true }}
+      <td class="mdl-data-table__cell--non-numeric">
+      {{"{{"}} .{{ .Name }} {{"}}"}}
+      </td>
+{{ end }}
+{{ end }}
+
+      {{ "<td class=\"mdl-data-table__cell--non-numeric\">{{convertDate .CreatedAt}}<br>{{convertDate .UpdatedAt}}</td>" }}
+
+      <td>
+        <form method="post" action="/_dizzy/{{.Kind.URL}}/delete" onsubmit="return confirm('realy?');">
+          <input type="hidden" name="keyId" value="{{"{{.Key.StringID}}"}}" />
+          <input type="hidden" name="Version" value="{{"{{.Version}}"}}" />
+          <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--icon mdl-button--accent">
+            <i class="material-icons">remove</i>
+          </button>
+        </form>
+      </td>
+
+    </tr>
+{{ "{{ end }}" }}
+
+  </tbody>
+</table>
+
+<!-- view template -->
+<a href="/_dizzy/{{.Kind.URL}}/create">
+<button id="add-content" class="mdl-button mdl-js-button mdl-button--fab mdl-button--primary">
+  <i class="material-icons">add</i>
+</button>
+</a>
+
+<script>
+</script>
+
+{{ "{{ end }}" }}
+

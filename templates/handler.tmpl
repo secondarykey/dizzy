@@ -1,0 +1,155 @@
+package {{.PackageName}}
+
+//dizzy auto generated:{{generated}}
+
+import (
+    "net/http"
+    "strconv"
+)
+
+
+{{range .Kinds}}
+type {{.TypeName}}Handler struct { }
+
+func (h {{.TypeName}}Handler) view(w http.ResponseWriter,r *http.Request)  {
+    dao := {{.TypeName}}{}
+    p := 1
+  	q := r.URL.Query()
+   	pageBuf := q.Get("page")
+   	if pageBuf != "" {
+   		page,err := strconv.Atoi(pageBuf)
+   		if err == nil {
+   			p = page
+   		}
+   	}
+	kinds,err := dao.Select(r,p)
+	if err != nil {
+		errorPage(w,500,"Datastore select error",err.Error())
+		return
+	}
+
+    max := false
+    if kinds == nil || len(kinds) == 0 {
+        max = true
+    }
+
+	dto := struct{
+		List []{{.TypeName}}
+		Prev int
+		Next int
+		Max bool
+	} {kinds,p-1,p+1,max}
+	parse(w,"view_{{.KindName}}.tmpl",dto)
+}
+
+func (h {{.TypeName}}Handler) create(w http.ResponseWriter,r *http.Request)  {
+	//empty
+	obj := &{{.TypeName}} {}
+
+	dto := struct{
+		Kind *{{.TypeName}}
+	} {obj}
+
+    //デフォルト設定
+    obj.SetDefault()
+
+	parse(w,"edit_{{.KindName}}.tmpl",dto)
+}
+
+func (h {{.TypeName}}Handler) edit(w http.ResponseWriter,r *http.Request)  {
+
+	obj := &{{.TypeName}} {}
+    keyId := r.FormValue("keyId")
+
+    err := obj.SelectById(r,keyId)
+    if err != nil {
+        errorPage(w,500,"Select Error",keyId)
+        return
+	}
+
+	dto := struct{
+		Kind *{{.TypeName}}
+	} {obj}
+
+	parse(w,"edit_{{.KindName}}.tmpl",dto)
+}
+
+func (h {{.TypeName}}Handler) update(w http.ResponseWriter,r *http.Request)  {
+
+	obj := &{{.TypeName}} {}
+    keyId := r.FormValue("keyId")
+
+    var err error
+
+    if keyId == "" {
+        err = obj.GenerateKey(r)
+	    if err != nil {
+            errorPage(w,500,"Datastore key set error",err.Error())
+            return
+	    }
+    } else {
+        verBuf := r.FormValue("Version")
+        ver,err := strconv.Atoi(verBuf)
+	    if err != nil {
+            errorPage(w,500,"Version parse Error",err.Error())
+            return
+	    }
+
+        err = obj.SelectByIdWithVersion(r,keyId,ver)
+	    if err != nil {
+            errorPage(w,500,"Datastore select Error",err.Error())
+            return
+	    }
+    }
+
+    //入力値の検証と設定
+	if err = obj.Validate(r); err != nil {
+        errorPage(w,400,"Validate error",err.Error())
+        return
+	}
+
+    err = obj.Put(r)
+    if err != nil {
+        errorPage(w,500,"Datastore put error",err.Error())
+        return
+    }
+
+    //項目の設定
+	dto := struct{
+		Kind *{{.TypeName}}
+	} {obj}
+	parse(w,"edit_{{.KindName}}.tmpl",dto)
+}
+
+func (h {{.TypeName}}Handler) delete(w http.ResponseWriter,r *http.Request)  {
+    keyId := r.FormValue("keyId")
+	obj := &{{.TypeName}} {}
+
+    verBuf := r.FormValue("Version")
+    ver,err := strconv.Atoi(verBuf)
+    if err != nil {
+       errorPage(w,500,"Version parse Error",err.Error())
+       return
+    }
+
+    err = obj.SelectByIdWithVersion(r,keyId,ver)
+    if err != nil {
+        errorPage(w,500,"Datastore select error",err.Error())
+        return
+    }
+
+    //物理削除の場合
+	//err = obj.Delete(r)
+	err = obj.DeleteLogical(r)
+    if err != nil {
+        errorPage(w,500,"Datastore delete error",err.Error())
+        return
+    }
+
+	h.view(w,r)
+}
+{{end}}
+
+
+
+
