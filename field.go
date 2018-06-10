@@ -1,45 +1,45 @@
 package main
 
 import (
-	"strings"
-	"go/ast"
 	"fmt"
-	"strconv"
+	"go/ast"
 	"log"
+	"strconv"
+	"strings"
 )
 
 //タグ指定用
 const TagPrefix = "dizzy:"
 
 type Field struct {
-	Name string
+	Name        string
 	DisplayName string
-	Type int
-	TypeName string
-	Default string
-	Display bool
-	Editable bool
-	Required bool
+	Type        int
+	TypeName    string
+	Default     string
+	Display     bool
+	Editable    bool
+	Required    bool
 }
 
 //引数の構造体データからフィールドに変換
-func createFields(str *ast.StructType) ([]*Field,error) {
+func createFields(str *ast.StructType) ([]*Field, error) {
 
-	defFields := make([]*Field,0)
+	defFields := make([]*Field, 0)
 	//kind からフィールドを生成
 	fieldList := str.Fields
 	fields := fieldList.List
 
 	hasMeta := false
 	//フィールド数繰り返す
-	for _,field := range fields {
+	for _, field := range fields {
 		//Type
-		f,m,err := NewField(field)
+		f, m, err := NewField(field)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 		if f != nil {
-			defFields = append(defFields,f)
+			defFields = append(defFields, f)
 		}
 		if m {
 			hasMeta = m
@@ -50,16 +50,16 @@ func createFields(str *ast.StructType) ([]*Field,error) {
 		fmt.Println("Not found ds.Meta?")
 	}
 
-	return defFields,nil
+	return defFields, nil
 }
 
-func NewField(field *ast.Field) (*Field,bool,error) {
+func NewField(field *ast.Field) (*Field, bool, error) {
 
 	f := &Field{
-		Display: false,
+		Display:  false,
 		Editable: true,
-		Default:"",
-		Required:false,
+		Default:  "",
+		Required: false,
 	}
 
 	//テスト用
@@ -138,43 +138,42 @@ func NewField(field *ast.Field) (*Field,bool,error) {
 	return f, false, nil
 }
 
-func setTag(f *Field,csv string) error {
+func setTag(f *Field, csv string) error {
 
-	liner,err := NewLiner(csv)
+	liner, err := NewLiner(csv)
 	if err != nil {
-		return fmt.Errorf("field tag dizzy error[%s]",csv)
+		return fmt.Errorf("field tag dizzy error[%s]", csv)
 	}
 
 	// TODO 長さ(数値時は範囲？)、選択
-	for key,val := range liner {
+	for key, val := range liner {
 		switch key {
 		case "name":
 			f.DisplayName = val
 		case "default":
 			f.Default = val
 		case "required":
-			v,err := strconv.ParseBool(val)
+			v, err := strconv.ParseBool(val)
 			if err != nil {
 				continue
 			}
 			f.Required = v
 		case "editable":
-			v,err := strconv.ParseBool(val)
+			v, err := strconv.ParseBool(val)
 			if err != nil {
 				continue
 			}
 			f.Editable = v
 		case "display":
-			v,err := strconv.ParseBool(val)
+			v, err := strconv.ParseBool(val)
 			if err != nil {
 				continue
 			}
 			f.Display = v
 		default:
-			log.Printf("not support dizzy tag %s=[%s]",key,val)
+			log.Printf("not support dizzy tag %s=[%s]", key, val)
 		}
 	}
-
 
 	return nil
 }

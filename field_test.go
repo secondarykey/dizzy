@@ -1,9 +1,26 @@
 package main
 
-import "testing"
+import (
+	"go/ast"
+	"testing"
+)
 
 func TestCreateFields(t *testing.T) {
 
-	//nil
+}
 
+func TestNewFields(t *testing.T) {
+
+	//型情報のテスト
+
+}
+
+func TestSetTag(t *testing.T) {
+
+	//CSVによるTagの解析
+
+}
+
+func getTestStruct() *ast.StructType {
+	return nil
 }

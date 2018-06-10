@@ -22,11 +22,11 @@ func init() {
 func main() {
 
 	var err error
-	m := flag.Bool("m", false, "monitor flag")
+	ci := flag.Bool("ci", false, "go test,release circuit integration flag")
 	flag.Parse()
 
-	if *m {
-		err = monitor()
+	if *ci {
+		err = circuit()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -54,7 +54,7 @@ func unlock() {
 	atomic.AddInt64(&lockVal, -1)
 }
 
-func monitor() error {
+func circuit() error {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -92,6 +92,7 @@ func monitor() error {
 						}
 					}
 					unlock()
+					watcher.Add(event.Name)
 
 				}
 			case err := <-watcher.Errors:
@@ -111,7 +112,7 @@ func monitor() error {
 
 func runTest() {
 	log.Println("#### Run Test")
-	cmd := exec.Command("go", "test", "-v", "-count=1", "-cover", ".")
+	cmd := exec.Command("go", "test", "-v", "-count=1", ".")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)

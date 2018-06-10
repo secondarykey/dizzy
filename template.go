@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-10 13:41:39.628902986 +0900 JST m=+0.000686078
+//dizzy release generated:2018-06-10 16:01:43.082738369 +0900 JST m=+0.000468137
 
 import (
     "fmt"
@@ -381,22 +381,76 @@ func (s *{{.TypeName}}) SetDefault() (err error) {
 
 func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
 
+    var val string
+    var bit int
+    var typeName string
+
+    //declared and not used
+    if false {
+        fmt.Printf("declared and not used.bit[%d]typeName[%s]",bit,typeName)
+    }
+
 {{ range .Fields }}
+
+    val = r.FormValue("{{.Name}}")
+    typeName = "{{.TypeName}}"
 
     {{ if eq .Editable true }}
 
+        //int value
         {{ if eq .Type 10 }}
-            s.{{ .Name }},err = strconv.Atoi(r.FormValue("{{.Name}}"))
-            if err != nil {
-                return fmt.Errorf("[%s] is int value.[%s]","{{.Name}}",r.FormValue("{{.Name}}"))
-            }
+
+    if len(typeName) > 3 {
+        bit,err = strconv.Atoi(typeName[3:])
+        if err != nil {
+            return err
+        }
+    } else {
+        bit = 64
+    }
+
+    if v,err := strconv.ParseInt(val,10,bit) ; err != nil {
+    return fmt.Errorf("[%s] value parse error[%s] [%s]","{{.Name}}",err,val)
+    } else {
+        s.{{ .Name }} = {{.TypeName}}(v)
+    }
+
+        //float value
         {{ else if eq .Type 20 }}
+
+    if len(typeName) > 5 {
+        bit,err = strconv.Atoi(typeName[5:])
+        if err != nil {
+            return err
+        }
+    } else {
+        return fmt.Errorf("float type error[%s]",typeName)
+    }
+
+    if v,err := strconv.ParseFloat(val,64) ; err != nil {
+        return fmt.Errorf("[%s] value parse error[%s] [%s]","{{.Name}}",err,val)
+    } else {
+        s.{{ .Name }} = {{.TypeName}}(v)
+    }
+
+        //bool value
         {{ else if eq .Type 30 }}
+
+    if v,err := strconv.ParseBool(val) ; err != nil {
+        return fmt.Errorf("[%s] value parse error[%s] [%s]","{{.Name}}",err,val)
+    } else {
+        s.{{ .Name }} = v
+    }
+
         {{ else if eq .Type 50 }}
-            s.{{ .Name }} = r.FormValue("{{.Name}}")
+
+    s.{{ .Name }} = val
+
         {{ end }}
 
+
     {{ end }}
+
 {{ end }}
     return nil
 }
@@ -786,20 +840,25 @@ Home[dizzy auto generated:{{generated}}]
 
 <pre>
 
+support 
+
 - signed integers (int, int8, int16, int32 and int64),
-
-all int support
-
 - bool,
 - string,
 - float32 and float64,
+
+not supported
+
 - []byte (up to 1 megabyte in length),
-- any type whose underlying type is one of the above predeclared types,
 - ByteString,
-- *Key,
-- time.Time (stored with microsecond precision),
 - appengine.BlobKey,
 - appengine.GeoPoint,
+
+I do not plan support it
+
+- *Key,
+- time.Time (stored with microsecond precision),
+- any type whose underlying type is one of the above predeclared types,
 - structs whose fields are all valid value types,
 - slices of any of the above.
 

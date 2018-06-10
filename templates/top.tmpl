@@ -13,20 +13,25 @@ Home[dizzy auto generated:{{generated}}]
 
 <pre>
 
+support 
+
 - signed integers (int, int8, int16, int32 and int64),
-
-all int support
-
 - bool,
 - string,
 - float32 and float64,
+
+not supported
+
 - []byte (up to 1 megabyte in length),
-- any type whose underlying type is one of the above predeclared types,
 - ByteString,
-- *Key,
-- time.Time (stored with microsecond precision),
 - appengine.BlobKey,
 - appengine.GeoPoint,
+
+I do not plan support it
+
+- *Key,
+- time.Time (stored with microsecond precision),
+- any type whose underlying type is one of the above predeclared types,
 - structs whose fields are all valid value types,
 - slices of any of the above.
 

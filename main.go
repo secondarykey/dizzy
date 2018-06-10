@@ -15,6 +15,7 @@ func main() {
 	if len(os.Args) > 1 {
 		sub = os.Args[1]
 	}
+
 	switch sub {
 	case "gen":
 		if len(os.Args) != 3 {
@@ -39,7 +40,6 @@ func main() {
 	result(err)
 }
 
-//datastoreへのアクセスファイルの出力
 func gen(dir string) error {
 
 	//ディレクトリの場合
@@ -162,4 +162,9 @@ func result(err error) {
 	}
 
 	os.Exit(0)
+}
+
+func exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
 }

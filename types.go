@@ -22,10 +22,9 @@ func (c Content) Value(val string) Content {
 type FieldType int
 
 const (
-
-	IntField = 10 //input integer
+	IntField   = 10 //input integer
 	FloatField = 20 //input integer
-	BoolField = 30
+	BoolField  = 30
 
 	StringField = 50 //input text
 
