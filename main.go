@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	}
 	switch sub {
 	case "gen":
-		if len(os.Args) !=2 {
+		if len(os.Args) != 3 {
 			err = fmt.Errorf("usage:dizzy gen dirname")
 			break
 		}
@@ -43,38 +43,38 @@ func main() {
 func gen(dir string) error {
 
 	//ディレクトリの場合
-	info,err := os.Stat(dir)
+	info, err := os.Stat(dir)
 	if err != nil {
-		return fmt.Errorf("os.Stat() error[%s]",err)
+		return fmt.Errorf("os.Stat() error[%s]", err)
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("second argument directory name[%s]",dir)
+		return fmt.Errorf("second argument directory name[%s]", dir)
 	}
 
-	files,err := ioutil.ReadDir(dir)
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadDir() error[%s]",dir)
+		return fmt.Errorf("ioutil.ReadDir() error[%s]", dir)
 	}
 
 	pkg := info.Name()
 	var all []*Kind
 	//ファイル数回繰り返す
-	for _,f := range files {
+	for _, f := range files {
 
 		if f.IsDir() {
 			continue
 		}
 
 		file := f.Name()
-		idx := strings.LastIndex(file,".go")
+		idx := strings.LastIndex(file, ".go")
 		if idx == -1 {
 			continue
 		}
 
-		in := filepath.Join(dir,file)
+		in := filepath.Join(dir, file)
 
-		kinds,packageName,err := createKinds(in)
+		kinds, packageName, err := createKinds(in)
 		if err != nil {
 			return err
 		}
@@ -84,43 +84,43 @@ func gen(dir string) error {
 			continue
 		}
 
-		all = append(all,kinds...)
+		all = append(all, kinds...)
 		pkg = packageName
 
 		//accessファイルを出力
-		err = generateAccessFile(in,packageName,kinds)
+		err = generateAccessFile(in, packageName, kinds)
 		if err != nil {
 			return err
 		}
 
 		//handlerファイルを出力
 		//Goファイルを作成
-		err = generateHandlerFile(in,packageName,kinds)
+		err = generateHandlerFile(in, packageName, kinds)
 		if err != nil {
 			return err
 		}
 
 		//テンプレートファイルを作成
-		err = generateTemplateFiles(in,kinds)
+		err = generateTemplateFiles(in, kinds)
 		if err != nil {
 			return err
 		}
 	}
 
 	//アクセス用のポータルファイルを作成
-	err = generateRootTemplateFiles(dir,all)
+	err = generateRootTemplateFiles(dir, all)
 	if err != nil {
 		return err
 	}
 
 	//AppEngine用のファイルを作成
-	err = generateAppEngineFiles(dir,all)
+	err = generateAppEngineFiles(dir, all)
 	if err != nil {
 		return err
 	}
 
 	//１回あればいいgoファイル(dizzy.go)の作成
-	err = generateDizzyFile(dir,pkg,all)
+	err = generateDizzyFile(dir, pkg, all)
 	if err != nil {
 		return err
 	}
@@ -157,10 +157,9 @@ func result(err error) {
 	}
 
 	fmt.Println("GenerateFiles : ")
-	for _,elm := range genFiles {
+	for _, elm := range genFiles {
 		fmt.Println("\t" + elm)
 	}
 
 	os.Exit(0)
 }
-

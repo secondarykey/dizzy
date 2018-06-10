@@ -7,9 +7,10 @@
 コメント「+dizzy」を埋め込んで実現します。
 
 ```sh
-$ go install github.com/secondarykey/dizzy/
-$ cd $GOPATH/src/github.com/secondarykey/dizzy/examples
-$ dizzy gen sample.go
+$ go get github.com/secondarykey/dizzy
+$ go install github.com/secondarykey/dizzy
+$ cd $GOPATH/src/github.com/secondarykey/dizzy
+$ dizzy gen examples
 ```
 
 ```sh
