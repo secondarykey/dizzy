@@ -14,6 +14,7 @@ const TagPrefix = "dizzy:"
 type Field struct {
 	Name        string
 	DisplayName string
+	DisplayType string
 	Type        int
 	TypeName    string
 	Default     string

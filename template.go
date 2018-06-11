@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-10 16:01:43.082738369 +0900 JST m=+0.000468137
+//dizzy release generated:2018-06-11 21:44:39.973654697 +0900 JST m=+0.000546971
 
 import (
     "fmt"
@@ -144,23 +144,9 @@ const EditTemplate = `{{ "{{define \"title\"}}" }}
 
       <tr>
         <td style="text-align:center;">
-<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
 
 {{ generateInputHTML . }}
 
-<!--
-          <input class="mdl-textfield__input" type="text" name="{{.Name}}" id="{{.Name}}" value="{{"{{"}} .Kind.{{.Name}} {{"}}"}}"
-{{ if eq .Type 10 }}
-           pattern="-?[0-9]*(\.[0-9]+)?"
-{{ end }}
-          />
-          <label class="mdl-textfield__label" for="{{.Name}}">{{.Name}}...</label>
-{{ if eq .Type 10 }}
-          <span class="mdl-textfield__error">Input is not a number!</span>
-{{ end }}
--->
-
-</div>
         </td>
       </tr>
 
@@ -175,6 +161,46 @@ const EditTemplate = `{{ "{{define \"title\"}}" }}
     </tbody>
   </table>
 </form>
+
+
+<script>
+var list = ""
+var valTag = ""
+var displayTag = ""
+
+{{ range .Kind.Fields }}
+
+{{ if eq .Editable true }}
+{{ if eq .TypeName "bool" }}
+
+list = document.querySelectorAll('#div{{ .Name }}.mdl-select > ul > li');
+valTag = document.querySelector('#{{ .Name }}');
+displayTag = document.querySelector('#display{{ .Name }}');
+
+
+for (var i=0; i< list.length; i++) {
+
+  var li = list[i];
+  li.addEventListener('click', function(e) {
+    valTag.setAttribute('value', e.target.getAttribute("data-id"));
+    displayTag.setAttribute('value', e.target.textContent);
+  });
+
+  //default value
+  if ( li.getAttribute("data-id") == "{{"{{"}} .Kind.{{.Name}} {{"}}"}}" ) {
+    valTag.setAttribute('value', li.getAttribute("data-id"));
+    displayTag.setAttribute('value', li.textContent);
+  }
+
+}
+
+{{ end }}
+
+{{ end }}
+
+{{ end }}
+
+</script>
 
 {{ "{{ end }}" }}
 
