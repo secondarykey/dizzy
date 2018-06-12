@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"os/exec"
+	"bufio"
 )
 
 func main() {
@@ -131,8 +133,18 @@ func gen(dir string) error {
 func dev() error {
 
 	//単純に「dev_appserver.py dizzy_app.yaml」を行う
-
-	return fmt.Errorf("Not implemented.")
+	cmd := exec.Command("dev_appserver.py","dizzy_app.yaml")
+	stdout,err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	cmd.Start()
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+	cmd.Wait()
+	return nil
 }
 
 func deploy() error {

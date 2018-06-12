@@ -159,7 +159,7 @@ func register(watcher *fsnotify.Watcher, dir string, ext string) error {
 
 func gen() error {
 	//テストなどで出力してある各ファイルを削除
-	file, err := os.OpenFile("template.go", os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.Create("template.go")
 	if err != nil {
 		return err
 	}
