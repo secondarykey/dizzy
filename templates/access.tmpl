@@ -168,9 +168,12 @@ func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
 
 func (s *{{.TypeName}}) SetDefault() (err error) {
 
-
 {{ range .Fields }}
     {{ if eq .Display true }}
+
+//デフォルト値を持っている値に関して上書きする
+
+
 
     {{ end }}
 {{ end }}
@@ -241,6 +244,7 @@ func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
         s.{{ .Name }} = v
     }
 
+        //string value
         {{ else if eq .Type 50 }}
 
     s.{{ .Name }} = val

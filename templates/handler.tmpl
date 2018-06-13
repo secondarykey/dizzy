@@ -46,6 +46,9 @@ func (h {{.TypeName}}Handler) create(w http.ResponseWriter,r *http.Request)  {
 	//empty
 	obj := &{{.TypeName}} {}
 
+//TODO リスト値の場合のリスト定義
+
+
 	dto := struct{
 		Kind *{{.TypeName}}
 	} {obj}
@@ -113,6 +116,8 @@ func (h {{.TypeName}}Handler) update(w http.ResponseWriter,r *http.Request)  {
         errorPage(w,500,"Datastore put error",err.Error())
         return
     }
+
+//TODO リスト値の場合のリスト定義
 
     //項目の設定
 	dto := struct{

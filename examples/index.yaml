@@ -1,7 +1,13 @@
 indexes:
 
-# dizzy auto generated:2018-06-11T21:43:16+09:00
+# dizzy auto generated:2018-06-13T10:33:18+09:00
 
+
+- kind: Test
+  properties:
+  - name: Deleted
+  - name: UpdatedAt
+    direction: desc
 
 - kind: KindType
   properties:
@@ -10,12 +16,6 @@ indexes:
     direction: desc
 
 - kind: SampleType
-  properties:
-  - name: Deleted
-  - name: UpdatedAt
-    direction: desc
-
-- kind: Test
   properties:
   - name: Deleted
   - name: UpdatedAt

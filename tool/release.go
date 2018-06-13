@@ -121,7 +121,17 @@ func runTest() error {
 
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		txt := scanner.Text()
+		color := 37
+
+		if strings.Index(txt, "FAIL") != -1 {
+			color = 31
+		} else if strings.Index(txt,"PASS") != -1 ||
+			 strings.Index(txt,"ok") != -1 {
+			 	color = 32
+		}
+
+		fmt.Printf("\x1b[%dm%s\x1b[0m\n",color,txt)
 	}
 	cmd.Wait()
 

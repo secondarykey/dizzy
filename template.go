@@ -11,7 +11,7 @@ import (
 const TemplateDirectory = "templates"
 
 //developer mode
-const UseTemplateFile = false
+const UseTemplateFile = true
 
 const AppTemplateFile = "app.tmpl"
 const AppTemplate = `runtime: go

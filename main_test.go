@@ -43,8 +43,9 @@ func TestGenerate(t *testing.T) {
 		t.Fatalf("not generate error template")
 	}
 	if !exists(templates + "layout.tmpl") {
-		t.Fatalf("not generate layout template")
+		t.Errorf("not generate layout template")
 	}
+
 	if !exists(templates + "top.tmpl") {
 		t.Fatalf("not generate top template")
 	}
