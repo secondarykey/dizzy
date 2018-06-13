@@ -31,12 +31,14 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
+		//出力
 		err = gen()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
+	os.Exit(0)
 }
 
 var lockVal int64
@@ -66,10 +68,6 @@ func circuit() error {
 	if err != nil {
 		return nil
 	}
-	err = register(watcher, "./templates/", ".tmpl")
-	if err != nil {
-		return nil
-	}
 
 	done := make(chan error)
 	go func() {
@@ -85,10 +83,10 @@ func circuit() error {
 
 					if lock() {
 						if strings.Index(event.Name, ".go") != -1 {
-							runTest()
-						} else if strings.Index(event.Name, ".tmpl") != -1 {
-							runRelease()
-							runTest()
+							err := runTest()
+							if err != nil {
+								done <-err
+							}
 						}
 					}
 					unlock()
@@ -101,6 +99,7 @@ func circuit() error {
 		}
 	}()
 
+	//手入力終了待ち受け
 	go func() {
 		stdin := bufio.NewScanner(os.Stdin)
 		stdin.Scan()
@@ -110,13 +109,13 @@ func circuit() error {
 	return <-done
 }
 
-func runTest() {
+func runTest() error {
 	log.Println("#### Run Test")
 	cmd := exec.Command("go", "test", "-v", "-count=1", ".")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	cmd.Start()
 
@@ -125,11 +124,8 @@ func runTest() {
 		fmt.Println(scanner.Text())
 	}
 	cmd.Wait()
-}
 
-func runRelease() {
-	log.Println("#### Run template generate")
-	gen()
+	return nil
 }
 
 func register(watcher *fsnotify.Watcher, dir string, ext string) error {
@@ -158,6 +154,7 @@ func register(watcher *fsnotify.Watcher, dir string, ext string) error {
 }
 
 func gen() error {
+
 	//テストなどで出力してある各ファイルを削除
 	file, err := os.Create("template.go")
 	if err != nil {
@@ -225,7 +222,7 @@ func getFile(name string) []byte {
 
 func removeWork() {
 
-	fmt.Println("Work remove")
+	fmt.Println("Work File remove")
 
 	work := "examples/"
 

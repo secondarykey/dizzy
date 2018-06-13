@@ -18,6 +18,9 @@ func main() {
 		sub = os.Args[1]
 	}
 
+	//ds
+	//form
+
 	switch sub {
 	case "gen":
 		if len(os.Args) != 3 {
@@ -164,13 +167,12 @@ func result(err error) {
 
 	fmt.Println("Success.")
 	if genFiles == nil {
-		fmt.Println("No generate.")
-		return
-	}
-
-	fmt.Println("GenerateFiles : ")
-	for _, elm := range genFiles {
-		fmt.Println("\t" + elm)
+		fmt.Println("\tNo generate.")
+	} else {
+		fmt.Println("GenerateFiles : ")
+		for _, elm := range genFiles {
+			fmt.Println("\t" + elm)
+		}
 	}
 
 	os.Exit(0)
