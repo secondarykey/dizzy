@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-15 13:46:49.5118909 +0900 JST m=+0.060522401
+//dizzy release generated:2018-06-15 15:37:51.4347001 +0900 JST m=+0.009996701
 
 import (
     "fmt"
