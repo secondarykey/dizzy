@@ -67,6 +67,14 @@ func circuit() error {
 				default:
 				}
 
+				f,err := os.Stat(event.Name)
+				if err != nil {
+					continue
+				}
+				if f.IsDir() {
+					continue
+				}
+
 				if lock() {
 					err := runTest()
 					if err != nil {
