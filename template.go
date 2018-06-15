@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-11 21:44:39.973654697 +0900 JST m=+0.000546971
+//dizzy release generated:2018-06-15 13:46:49.5118909 +0900 JST m=+0.060522401
 
 import (
     "fmt"
@@ -11,7 +11,7 @@ import (
 const TemplateDirectory = "templates"
 
 //developer mode
-const UseTemplateFile = true
+const UseTemplateFile = false
 
 const AppTemplateFile = "app.tmpl"
 const AppTemplate = `runtime: go
@@ -39,6 +39,9 @@ import (
     "time"
 
 	"github.com/gorilla/mux"
+	"github.com/knightso/base/errors"
+
+	"google.golang.org/appengine/datastore"
 )
 
 const TEMPLATE_DIR = "templates/"
@@ -110,7 +113,24 @@ func parse(w http.ResponseWriter,tmplName string,dto interface{}) {
     w.WriteHeader(200)
     return
 }
-`
+
+func isNoSuchEntity(err error) bool {
+    if err != nil {
+	    if errors.Root(err) == datastore.ErrNoSuchEntity {
+	        return true
+	    }
+    }
+	return false
+}
+
+func isFieldMismatch(err error) bool {
+    if err != nil {
+   	    if _,ok := err.(*datastore.ErrFieldMismatch) ; ok {
+   	        return true
+   		}
+   	}
+   	return false
+}`
 
 const EditTemplateFile =  "edit.tmpl"
 const EditTemplate = `{{ "{{define \"title\"}}" }}
@@ -298,12 +318,13 @@ func (s *{{.TypeName}}) Select(r *http.Request,p int) ([]{{.TypeName}},error) {
    		if err == datastore.Done {
    			break
    		}
-   	    //TODO どうするか？
-       	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-       		if err != nil {
-       			return nil,err
-       		}
+
+        if isFieldMismatch(err) {
+       		//return nil,err
+        } else if err != nil {
+       		return nil,err
        	}
+
    		d.SetKey(key)
    		rtn = append(rtn, d)
    	}
@@ -331,32 +352,26 @@ func (s *{{.TypeName}}) getCursorName(p int) string {
 }
 
 func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
-    //データを検索
-    key := s.CreateKey(r,id)
-	c := appengine.NewContext(r)
-	//自身に設定する
-    err := ds.Get(c,key,s)
-    //TODO どうするか？
-	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+    return SelectByIdWitchVersion(r,id,-1)
 }
 
 func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {
     //データを検索
     key := s.CreateKey(r,id)
 	c := appengine.NewContext(r)
-	//自身に設定する
-    err := ds.GetWithVersion(c,key,version,s)
-    //TODO どうするか？
-	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-		if err != nil {
-			return err
-		}
-	}
+
+	var err error
+    if version <= -1 {
+        err = ds.Get(c,key,s)
+    } else {
+        err = ds.GetWithVersion(c,key,version,s)
+    }
+
+    if isFieldMisMatch(err) {
+        //return err
+    } else if err != nil {
+		return err
+    }
 	return nil
 }
 
@@ -375,7 +390,7 @@ func (s *{{.TypeName}}) Delete(r *http.Request) error {
 	}
 {{ if ne .Content 0 }}
 {{ end }}
-  return nil
+    return nil
 }
 
 func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
@@ -395,9 +410,12 @@ func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
 
 func (s *{{.TypeName}}) SetDefault() (err error) {
 
-
 {{ range .Fields }}
     {{ if eq .Display true }}
+
+//デフォルト値を持っている値に関して上書きする
+
+
 
     {{ end }}
 {{ end }}
@@ -468,6 +486,7 @@ func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
         s.{{ .Name }} = v
     }
 
+        //string value
         {{ else if eq .Type 50 }}
 
     s.{{ .Name }} = val
@@ -560,6 +579,9 @@ func (h {{.TypeName}}Handler) create(w http.ResponseWriter,r *http.Request)  {
 	//empty
 	obj := &{{.TypeName}} {}
 
+//TODO リスト値の場合のリスト定義
+
+
 	dto := struct{
 		Kind *{{.TypeName}}
 	} {obj}
@@ -627,6 +649,8 @@ func (h {{.TypeName}}Handler) update(w http.ResponseWriter,r *http.Request)  {
         errorPage(w,500,"Datastore put error",err.Error())
         return
     }
+
+//TODO リスト値の場合のリスト定義
 
     //項目の設定
 	dto := struct{

@@ -13,19 +13,18 @@ const TagPrefix = "dizzy:"
 
 type Field struct {
 	Name        string
-	DisplayName string
-	DisplayType string
 	Type        int
 	TypeName    string
+	DisplayName string
 	Default     string
 	Display     bool
 	Editable    bool
+	EditType    string
 	Required    bool
 }
 
 //引数の構造体データからフィールドに変換
 func createFields(str *ast.StructType) ([]*Field, error) {
-
 	defFields := make([]*Field, 0)
 	//kind からフィールドを生成
 	fieldList := str.Fields
@@ -107,11 +106,11 @@ func NewField(field *ast.Field) (*Field, bool, error) {
 	}
 
 	lit := field.Tag
+
 	//タグなしはそのまま返す
 	if lit == nil {
 		return f, false, nil
 	}
-
 	org := lit.Value
 	idx := strings.Index(org, TagPrefix)
 	if idx == -1 {
@@ -131,11 +130,12 @@ func NewField(field *ast.Field) (*Field, bool, error) {
 	}
 
 	csv := line[:idx]
-
 	err := setTag(f, csv)
+
 	if err != nil {
 		return f, false, err
 	}
+
 	return f, false, nil
 }
 
@@ -153,6 +153,8 @@ func setTag(f *Field, csv string) error {
 			f.DisplayName = val
 		case "default":
 			f.Default = val
+		case "type":
+			f.EditType = val
 		case "required":
 			v, err := strconv.ParseBool(val)
 			if err != nil {
@@ -160,11 +162,13 @@ func setTag(f *Field, csv string) error {
 			}
 			f.Required = v
 		case "editable":
+
 			v, err := strconv.ParseBool(val)
 			if err != nil {
 				continue
 			}
 			f.Editable = v
+
 		case "display":
 			v, err := strconv.ParseBool(val)
 			if err != nil {
@@ -174,7 +178,7 @@ func setTag(f *Field, csv string) error {
 		default:
 			log.Printf("not support dizzy tag %s=[%s]", key, val)
 		}
-	}
 
+	}
 	return nil
 }

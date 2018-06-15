@@ -13,7 +13,6 @@ import (
 
 	"bufio"
 	"github.com/fsnotify/fsnotify"
-	"sync/atomic"
 )
 
 func init() {
@@ -41,19 +40,20 @@ func main() {
 	os.Exit(0)
 }
 
-var lockVal int64
+var lastUnixTime int64
 
 func lock() bool {
-	atomic.AddInt64(&lockVal, 1)
-	if lockVal == 1 {
+
+	now := time.Now().Unix()
+	dur := int64(1)
+	if now > lastUnixTime + dur {
 		return true
 	}
-	log.Println(lockVal)
 	return false
 }
 
 func unlock() {
-	atomic.AddInt64(&lockVal, -1)
+	lastUnixTime = time.Now().Unix()
 }
 
 func circuit() error {
@@ -64,7 +64,7 @@ func circuit() error {
 	}
 	defer watcher.Close()
 
-	err = register(watcher, "./", ".go")
+	watcher.Add("./")
 	if err != nil {
 		return nil
 	}
@@ -74,25 +74,23 @@ func circuit() error {
 		for {
 			select {
 			case event := <-watcher.Events:
-
 				switch {
-				case event.Op&fsnotify.Rename == fsnotify.Rename,
-					event.Op&fsnotify.Create == fsnotify.Create,
-					event.Op&fsnotify.Remove == fsnotify.Remove,
-					event.Op&fsnotify.Write == fsnotify.Write:
+				case event.Op&fsnotify.Rename == fsnotify.Rename:
+				case event.Op&fsnotify.Create == fsnotify.Create:
+				case event.Op&fsnotify.Remove == fsnotify.Remove:
+				case event.Op&fsnotify.Chmod == fsnotify.Chmod:
+				case event.Op&fsnotify.Write == fsnotify.Write:
+				default:
+				}
 
-					if lock() {
-						if strings.Index(event.Name, ".go") != -1 {
-							err := runTest()
-							if err != nil {
-								done <-err
-							}
-						}
+				if lock() {
+					err := runTest()
+					if err != nil {
+						done <- err
 					}
 					unlock()
-					watcher.Add(event.Name)
-
 				}
+
 			case err := <-watcher.Errors:
 				done <- err
 			}
@@ -110,8 +108,12 @@ func circuit() error {
 }
 
 func runTest() error {
-	log.Println("#### Run Test")
-	cmd := exec.Command("go", "test", "-v", "-count=1", ".")
+
+	log.Println("\x1b[36m######################################################\x1b[0m")
+	log.Println("\x1b[36m# Test [enter -> quit]\x1b[0m")
+	log.Println("\x1b[36m######################################################\x1b[0m")
+
+	cmd := exec.Command("go", "test", "-v",  ".")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
@@ -128,38 +130,15 @@ func runTest() error {
 			color = 31
 		} else if strings.Index(txt,"PASS") != -1 ||
 			 strings.Index(txt,"ok") != -1 {
-			 	color = 32
+			color = 32
+		} else if strings.Index(txt, "RUN") != -1 {
+			color = 35
 		}
 
 		fmt.Printf("\x1b[%dm%s\x1b[0m\n",color,txt)
 	}
 	cmd.Wait()
 
-	return nil
-}
-
-func register(watcher *fsnotify.Watcher, dir string, ext string) error {
-	infos, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-	for _, info := range infos {
-		if info.IsDir() {
-			continue
-		}
-		n := info.Name()
-		if n == "template.go" {
-			continue
-		}
-		idx := strings.Index(n, ext)
-		if idx != -1 {
-			a := dir + n
-			err = watcher.Add(a)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -249,6 +228,7 @@ func removeWork() {
 	remove("sample_handler.go")
 	remove("dizzy.go")
 	remove("dizzy_app.yaml")
+	remove("index.yaml")
 }
 
 func remove(f string) {

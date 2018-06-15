@@ -71,12 +71,13 @@ func (s *{{.TypeName}}) Select(r *http.Request,p int) ([]{{.TypeName}},error) {
    		if err == datastore.Done {
    			break
    		}
-   	    //TODO どうするか？
-       	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-       		if err != nil {
-       			return nil,err
-       		}
+
+        if isFieldMismatch(err) {
+       		//return nil,err
+        } else if err != nil {
+       		return nil,err
        	}
+
    		d.SetKey(key)
    		rtn = append(rtn, d)
    	}
@@ -104,32 +105,26 @@ func (s *{{.TypeName}}) getCursorName(p int) string {
 }
 
 func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
-    //データを検索
-    key := s.CreateKey(r,id)
-	c := appengine.NewContext(r)
-	//自身に設定する
-    err := ds.Get(c,key,s)
-    //TODO どうするか？
-	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+    return SelectByIdWitchVersion(r,id,-1)
 }
 
 func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {
     //データを検索
     key := s.CreateKey(r,id)
 	c := appengine.NewContext(r)
-	//自身に設定する
-    err := ds.GetWithVersion(c,key,version,s)
-    //TODO どうするか？
-	if _,ok := err.(*datastore.ErrFieldMismatch) ; !ok {
-		if err != nil {
-			return err
-		}
-	}
+
+	var err error
+    if version <= -1 {
+        err = ds.Get(c,key,s)
+    } else {
+        err = ds.GetWithVersion(c,key,version,s)
+    }
+
+    if isFieldMisMatch(err) {
+        //return err
+    } else if err != nil {
+		return err
+    }
 	return nil
 }
 
@@ -148,7 +143,7 @@ func (s *{{.TypeName}}) Delete(r *http.Request) error {
 	}
 {{ if ne .Content 0 }}
 {{ end }}
-  return nil
+    return nil
 }
 
 func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {

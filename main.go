@@ -129,7 +129,6 @@ func gen(dir string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -141,6 +140,7 @@ func dev() error {
 	if err != nil {
 		return err
 	}
+
 	cmd.Start()
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {

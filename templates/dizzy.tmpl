@@ -9,6 +9,9 @@ import (
     "time"
 
 	"github.com/gorilla/mux"
+	"github.com/knightso/base/errors"
+
+	"google.golang.org/appengine/datastore"
 )
 
 const TEMPLATE_DIR = "templates/"
@@ -79,4 +82,22 @@ func parse(w http.ResponseWriter,tmplName string,dto interface{}) {
     }
     w.WriteHeader(200)
     return
+}
+
+func isNoSuchEntity(err error) bool {
+    if err != nil {
+	    if errors.Root(err) == datastore.ErrNoSuchEntity {
+	        return true
+	    }
+    }
+	return false
+}
+
+func isFieldMismatch(err error) bool {
+    if err != nil {
+   	    if _,ok := err.(*datastore.ErrFieldMismatch) ; ok {
+   	        return true
+   		}
+   	}
+   	return false
 }
