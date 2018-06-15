@@ -47,23 +47,50 @@ func TestCreateFields(t *testing.T) {
 		t.Fatalf("TagStruct Field length Error.[%d]",len(f))
 	}
 
+	str = getStringStruct(t,StringErrorStruct)
+	f,err = createFields(str)
+	if f != nil {
+		t.Fatalf("ErrorStruct Field not Error.[%v]",err)
+	}
+	if err == nil {
+		t.Fatalf("ErrorStruct not Error.")
+	}
+
+	t.Log("LOG:" + err.Error())
+
 }
 
 func TestNewFields(t *testing.T) {
 
 	//フィールド情報のテスト
+	str := getStringStruct(t,StringTagStruct)
+	fs := str.Fields.List
 
 	//名称
 	//タイプ番号
 	//型名
+	f,flag,err := NewField(fs[0])
 
-	//タグの設定ができるかをチェック（中身はsetTag）
+	//デフォルトの名称が入っているか？
+	if f.Name != "TestField1" {
+		t.Errorf("NewField Field Name[%s]",f.Name)
+	}
+	if flag {
+		t.Errorf("NewField Field Not ds.Meta")
+	}
+	if err != nil {
+		t.Errorf("NewField Field error[%v]",err)
+	}
 
-	//無視するフィールドのときにnil
+	//タグの設定ができるかをチェック
+	f,flag,err = NewField(fs[1])
+	if f.Name != "TestField2" {
+		t.Errorf("NewField Field Name Error[%s]",f.Name)
+	}
+	if f.DisplayName != "DisplayName" {
+		t.Errorf("NewField Field DisplayName Error[%s]",f.Name)
+	}
 
-	//ds.Metaを渡した時にtrue
-
-	t.Fatal("Not Implements.")
 }
 
 func TestSetTag(t *testing.T) {
@@ -235,16 +262,27 @@ type TestStruct struct {
 const StringTagStruct =`
 package test
 import(
+"github.com/knightso/base/gae/ds"
 )
 
 type TagStruct struct {
 	TestField1 int     ` + "`" + `datastore:"" json:"" ` + "`" + `
-	TestField2 string  ` + "`" + `datastore:"" json:"" dizzy:""` + "`" +  `
-	TestField3 int     ` + "`" + `datastore:"" json:"" ` + "`" + `
+	TestField2 string  ` + "`" + `datastore:"" json:"" dizzy:"name=DisplayName"` + "`" +  `
+	TestField3 int     ` + "`" + `datastore:"" json:"" dizzy:""` + "`" + `
 	TestField4 string  ` + "`" + `datastore:"" json:"" dizzy:""` + "`" + `
 	TestField5 int     ` + "`" + `datastore:"" json:"" ` + "`" + `
 	TestField6 string  ` + "`" + `datastore:"" json:"" dizzy:""` + "`" + `
 	TestField7 int     ` + "`" + `datastore:"" json:"" ` + "`" + `
 	TestField8 string  ` + "`" + `datastore:"" json:"" dizzy:""` + "`" + `
+	ds.Meta
+}
+`
+const StringErrorStruct =`
+package test
+import(
+)
+
+type ErrorStruct struct {
+	TestField string  ` + "`" + `datastore:"" json:"" dizzy:"error"` + "`" +  `
 }
 `

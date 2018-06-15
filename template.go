@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-15 15:40:24.4222881 +0900 JST m=+0.008000501
+//dizzy release generated:2018-06-15 20:45:28.8717366 +0900 JST m=+0.046999401
 
 import (
     "fmt"
@@ -352,7 +352,7 @@ func (s *{{.TypeName}}) getCursorName(p int) string {
 }
 
 func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
-    return SelectByIdWitchVersion(r,id,-1)
+    return s.SelectByIdWitchVersion(r,id,-1)
 }
 
 func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {

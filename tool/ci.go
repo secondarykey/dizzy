@@ -67,10 +67,16 @@ func circuit() error {
 				default:
 				}
 
-				f,err := os.Stat(event.Name)
+				fname := event.Name
+				if fname == "template.go" {
+					continue
+				}
+
+				f,err := os.Stat(fname)
 				if err != nil {
 					continue
 				}
+
 				if f.IsDir() {
 					continue
 				}
