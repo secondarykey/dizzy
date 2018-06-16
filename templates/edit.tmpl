@@ -3,7 +3,7 @@
 {{ "{{end}}" }}
 
 {{ "{{define \"content\"}}" }}
-<form method="post" action="/_dizzy/{{.Kind.URL}}/update" onsubmit="return confirm('realy?');">
+<form method="post" action="/_dizzy/{{.Kind.URL}}/update" onsubmit="return confirm('realy?');" enctype="multipart/form-data" >
 
 <input type="hidden" name="Version" value="{{ "{{ .Kind.Version }}" }}">
 
@@ -36,6 +36,24 @@
       </tr>
 
 {{ end }}
+
+{{ if .Kind.Content }}
+
+      <tr>
+        <td style="text-align:center;">
+
+  <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
+    <input class="mdl-textfield__input" placeholder="Content" type="text" id="contentName" readonly/>
+    <div class="mdl-button mdl-button--primary mdl-button--icon mdl-button--file">
+      <i class="material-icons">attach_file</i><input type="file" id="contentBtn" name="Content">
+    </div>
+  </div>
+
+        </td>
+      </tr>
+
+{{ end }}
+
       <tr>
         <td>
           <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--icon mdl-button--primary">
@@ -83,6 +101,13 @@ for (var i=0; i< list.length; i++) {
 
 {{ end }}
 
+{{ end }}
+
+
+{{ if .Kind.Content }}
+document.getElementById("contentBtn").onchange = function () {
+    document.getElementById("contentName").value = this.files[0].name;
+};
 {{ end }}
 
 </script>

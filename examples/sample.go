@@ -4,7 +4,7 @@ import "github.com/knightso/base/gae/ds"
 
 //テストでも使用しています。
 
-//+DIZZY(name=KindType,cache=false,content=none,limit=10,url=work)
+//+DIZZY(name=KindType,cache=false,content=true,limit=10,url=work)
 type WorkType struct {
 	Name   string `dizzy:"required=true"`
 	Number int

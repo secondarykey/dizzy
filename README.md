@@ -17,11 +17,14 @@ $ dev_appserver.py dizzy_app.yaml
 
 [管理画面](http://localhost:8080/_dizzy/) にアクセス(admin)できるはずです
 
-
 予定としては
 
-* 型を増やす
-* デモサイトを作成
-* もろもろ
+* Contentを可能にする
+* 型を増やす([]byte,ByteString)
+* デフォルトの設定
+* 入力チェック
+* リストの生成方法を作成（Boolを作ってみる）
+
+* デモサイトを作成(ログイン制にする)
 
 Continue on [wiki](https://github.com/secondarykey/dizzy/wiki).

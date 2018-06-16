@@ -109,6 +109,7 @@ func TestNewKind(t *testing.T) {
 	if kind.Cache != true {
 		t.Errorf("Error:cache other Cache[%v]", kind.Cache)
 	}
+
 	//csv
 	kind ,err= NewKind("+DIZZY(csv=head,cache=false)", nil)
 	if kind.Cache != false {
@@ -122,28 +123,30 @@ func TestNewKind(t *testing.T) {
 
 	t.Logf("LOG:Content(content) Value")
 	//contentテスト
-	kind,err = NewKind("+DIZZY(content=text)", nil)
-	if kind.Content != ContentText {
-		t.Errorf("Error:content text Content[%d]", kind.Content)
+	kind,err = NewKind("+DIZZY(content=false)", nil)
+	if kind.Content != false {
+		t.Errorf("Error:content Content[%v]", kind.Content)
 	}
-	kind,err = NewKind("+DIZZY(content=binary)", nil)
-	if kind.Content != ContentBinary {
-		t.Errorf("Error:content binary Content[%d]", kind.Content)
+	kind,err = NewKind("+DIZZY(content=true)", nil)
+	if kind.Content != true {
+		t.Errorf("Error:content Content[%v]", kind.Content)
 	}
+
 	kind,err = NewKind("+DIZZY(content=other)", nil)
-	if kind.Content != ContentNone {
-		t.Errorf("Error:content other Content[%d]", kind.Content)
+	if kind.Content != false {
+		t.Errorf("Error:content other Content[%v]", kind.Content)
 	}
-	kind,err = NewKind("+DIZZY(csv=head,content=binary)", nil)
-	if kind.Content != ContentBinary {
-		t.Errorf("Error:content csv Content[%d]", kind.Content)
+	kind,err = NewKind("+DIZZY(csv=head,content=true)", nil)
+	if kind.Content != true {
+		t.Errorf("Error:content csv Content[%v]", kind.Content)
 	}
 	kind,err = NewKind("+DIZZY(csv=head)", nil)
-	if kind.Content != ContentNone {
-		t.Errorf("Error:content nothing Content[%d]", kind.Content)
+	if kind.Content != false {
+		t.Errorf("Error:content nothing Content[%v]", kind.Content)
 	}
 
 	t.Logf("LOG:Limit(limit) Value")
+
 	//limitテスト
 	kind,err = NewKind("+DIZZY(limit=20)", nil)
 	if kind.Limit != 20 {
@@ -179,8 +182,8 @@ func defaultKind(t *testing.T, kind *Kind, prefix string) {
 	if kind.Cache != true {
 		t.Errorf("Error:%s default Cache[%v]", prefix, kind.Cache)
 	}
-	if kind.Content != ContentNone {
-		t.Errorf("Error:%s default Content[%d]", prefix, kind.Content)
+	if kind.Content != false {
+		t.Errorf("Error:%s default Content[%v]", prefix, kind.Content)
 	}
 	//kind.Struct != nil ()
 	if kind.Limit != 10 {

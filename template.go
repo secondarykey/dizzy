@@ -1,6 +1,6 @@
 package main
 
-//dizzy release generated:2018-06-15 20:45:28.8717366 +0900 JST m=+0.046999401
+//dizzy release generated:2018-06-16 12:14:37.2499307 +0900 JST m=+0.006999401
 
 import (
     "fmt"
@@ -138,7 +138,7 @@ const EditTemplate = `{{ "{{define \"title\"}}" }}
 {{ "{{end}}" }}
 
 {{ "{{define \"content\"}}" }}
-<form method="post" action="/_dizzy/{{.Kind.URL}}/update" onsubmit="return confirm('realy?');">
+<form method="post" action="/_dizzy/{{.Kind.URL}}/update" onsubmit="return confirm('realy?');" enctype="multipart/form-data" >
 
 <input type="hidden" name="Version" value="{{ "{{ .Kind.Version }}" }}">
 
@@ -171,6 +171,24 @@ const EditTemplate = `{{ "{{define \"title\"}}" }}
       </tr>
 
 {{ end }}
+
+{{ if .Kind.Content }}
+
+      <tr>
+        <td style="text-align:center;">
+
+  <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
+    <input class="mdl-textfield__input" placeholder="Content" type="text" id="contentName" readonly/>
+    <div class="mdl-button mdl-button--primary mdl-button--icon mdl-button--file">
+      <i class="material-icons">attach_file</i><input type="file" id="contentBtn" name="Content">
+    </div>
+  </div>
+
+        </td>
+      </tr>
+
+{{ end }}
+
       <tr>
         <td>
           <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--icon mdl-button--primary">
@@ -218,6 +236,13 @@ for (var i=0; i< list.length; i++) {
 
 {{ end }}
 
+{{ end }}
+
+
+{{ if .Kind.Content }}
+document.getElementById("contentBtn").onchange = function () {
+    document.getElementById("contentName").value = this.files[0].name;
+};
 {{ end }}
 
 </script>
@@ -352,7 +377,7 @@ func (s *{{.TypeName}}) getCursorName(p int) string {
 }
 
 func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
-    return s.SelectByIdWitchVersion(r,id,-1)
+    return s.SelectByIdWithVersion(r,id,-1)
 }
 
 func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {
@@ -367,7 +392,7 @@ func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version 
         err = ds.GetWithVersion(c,key,version,s)
     }
 
-    if isFieldMisMatch(err) {
+    if isFieldMismatch(err) {
         //return err
     } else if err != nil {
 		return err
@@ -388,7 +413,8 @@ func (s *{{.TypeName}}) Delete(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-{{ if ne .Content 0 }}
+{{ if .Content }}
+
 {{ end }}
     return nil
 }
@@ -402,7 +428,7 @@ func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
         return err
     }
 
-{{ if ne .Content 0}}
+{{ if .Content}}
 {{ end }}
 
   return nil
@@ -500,28 +526,38 @@ func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
     return nil
 }
 
-{{ if ne .Content 0 }}
+{{ if .Content }}
+
 
 //コンテンツデータが存在する場合
-type {{.TypeName}}Data struct {
+type {{.TypeName}}Content struct {
 	key     *datastore.Key
+	Mime    string
 	Content []byte
 }
 
-//子のキー作成
-func (d *{{ .TypeName }}Data) GetKey() *datastore.Key {
-	return d.key
-}
+const KIND_{{ .KindName }}_Content = "{{ .KindName }}Content"
 
-func (d *{{ .TypeName }}Data) SetKey(k *datastore.Key) {
-	d.key = k
+func (d *{{ .TypeName }}Content) SetGroupKey(r *http.Request,k *datastore.Key) {
+	c := appengine.NewContext(r)
+    key := datastore.NewIncompleteKey(c, KIND_{{.KindName}}_Content, k)
+    d.SetKey(key)
+    return
 }
 
 //同時にコンテンツを生成する場合
-func (s *{{.TypeName}}) Put(content []byte) error {
-    //
-    s.Put()
-    //ページャに対する検索
+func (d *{{.TypeName}}Content) Put(r *http.Request) error {
+	c := appengine.NewContext(r)
+	return ds.Put(c,d)
+}
+
+//子のキー作成
+func (d *{{ .TypeName }}Content) GetKey() *datastore.Key {
+	return d.key
+}
+
+func (d *{{ .TypeName }}Content) SetKey(k *datastore.Key) {
+	d.key = k
 }
 
 {{ end }}
@@ -538,6 +574,7 @@ const HandlerGoTemplate = `package {{.PackageName}}
 import (
     "net/http"
     "strconv"
+    "io/ioutil"
 )
 
 
@@ -649,6 +686,39 @@ func (h {{.TypeName}}Handler) update(w http.ResponseWriter,r *http.Request)  {
         errorPage(w,500,"Datastore put error",err.Error())
         return
     }
+
+{{ if .Content }}
+    //データが存在する場合
+    upload,header,err := r.FormFile("Content")
+    if err != nil {
+        errorPage(w,500,"Datastore upload file error",err.Error())
+        return
+    }
+    defer upload.Close()
+	b, err := ioutil.ReadAll(upload)
+	if err != nil {
+        errorPage(w,500,"Datastore upload file read error",err.Error())
+        return
+	}
+    mime := header.Header["Content-Type"][0]
+
+    //ファイルをバイナリにする
+    //MIMEコードを取得
+
+    content :=  &{{.TypeName}}Content {
+        Content : b,
+        Mime : mime,
+    }
+
+    content.SetGroupKey(r,obj.GetKey())
+
+    err = content.Put(r)
+    if err != nil {
+        errorPage(w,500,"Datastore content put error",err.Error())
+        return
+    }
+
+{{ end }}
 
 //TODO リスト値の場合のリスト定義
 
@@ -813,6 +883,26 @@ const LayoutTemplate = `{{ "{{define \"layout\"}}" }}
       font-size: 24px;
       color: rgba(255, 255, 255, 0.56);
       margin-right: 32px;
+    }
+
+    .mdl-button--file input {
+        cursor: pointer;
+        height: 100%;
+        right: 0;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        width: 300px;
+        z-index: 4;
+    }
+
+    .mdl-textfield--file .mdl-textfield__input {
+        box-sizing: border-box;
+        width: calc(100% - 32px);
+    }
+
+    .mdl-textfield--file .mdl-button--file {
+        right: 0;
     }
 
     #add-content {

@@ -5,6 +5,7 @@ package {{.PackageName}}
 import (
     "net/http"
     "strconv"
+    "io/ioutil"
 )
 
 
@@ -116,6 +117,39 @@ func (h {{.TypeName}}Handler) update(w http.ResponseWriter,r *http.Request)  {
         errorPage(w,500,"Datastore put error",err.Error())
         return
     }
+
+{{ if .Content }}
+    //データが存在する場合
+    upload,header,err := r.FormFile("Content")
+    if err != nil {
+        errorPage(w,500,"Datastore upload file error",err.Error())
+        return
+    }
+    defer upload.Close()
+	b, err := ioutil.ReadAll(upload)
+	if err != nil {
+        errorPage(w,500,"Datastore upload file read error",err.Error())
+        return
+	}
+    mime := header.Header["Content-Type"][0]
+
+    //ファイルをバイナリにする
+    //MIMEコードを取得
+
+    content :=  &{{.TypeName}}Content {
+        Content : b,
+        Mime : mime,
+    }
+
+    content.SetGroupKey(r,obj.GetKey())
+
+    err = content.Put(r)
+    if err != nil {
+        errorPage(w,500,"Datastore content put error",err.Error())
+        return
+    }
+
+{{ end }}
 
 //TODO リスト値の場合のリスト定義
 

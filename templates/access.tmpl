@@ -105,7 +105,7 @@ func (s *{{.TypeName}}) getCursorName(p int) string {
 }
 
 func (s *{{.TypeName}}) SelectById(r *http.Request,id string) error {
-    return s.SelectByIdWitchVersion(r,id,-1)
+    return s.SelectByIdWithVersion(r,id,-1)
 }
 
 func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version int) error {
@@ -120,7 +120,7 @@ func (s *{{.TypeName}}) SelectByIdWithVersion(r *http.Request,id string,version 
         err = ds.GetWithVersion(c,key,version,s)
     }
 
-    if isFieldMisMatch(err) {
+    if isFieldMismatch(err) {
         //return err
     } else if err != nil {
 		return err
@@ -141,7 +141,8 @@ func (s *{{.TypeName}}) Delete(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-{{ if ne .Content 0 }}
+{{ if .Content }}
+
 {{ end }}
     return nil
 }
@@ -155,7 +156,7 @@ func (s *{{.TypeName}}) DeleteLogical(r *http.Request) error {
         return err
     }
 
-{{ if ne .Content 0}}
+{{ if .Content}}
 {{ end }}
 
   return nil
@@ -253,28 +254,38 @@ func (s *{{.TypeName}}) Validate(r *http.Request) (err error) {
     return nil
 }
 
-{{ if ne .Content 0 }}
+{{ if .Content }}
+
 
 //コンテンツデータが存在する場合
-type {{.TypeName}}Data struct {
+type {{.TypeName}}Content struct {
 	key     *datastore.Key
+	Mime    string
 	Content []byte
 }
 
-//子のキー作成
-func (d *{{ .TypeName }}Data) GetKey() *datastore.Key {
-	return d.key
-}
+const KIND_{{ .KindName }}_Content = "{{ .KindName }}Content"
 
-func (d *{{ .TypeName }}Data) SetKey(k *datastore.Key) {
-	d.key = k
+func (d *{{ .TypeName }}Content) SetGroupKey(r *http.Request,k *datastore.Key) {
+	c := appengine.NewContext(r)
+    key := datastore.NewIncompleteKey(c, KIND_{{.KindName}}_Content, k)
+    d.SetKey(key)
+    return
 }
 
 //同時にコンテンツを生成する場合
-func (s *{{.TypeName}}) Put(content []byte) error {
-    //
-    s.Put()
-    //ページャに対する検索
+func (d *{{.TypeName}}Content) Put(r *http.Request) error {
+	c := appengine.NewContext(r)
+	return ds.Put(c,d)
+}
+
+//子のキー作成
+func (d *{{ .TypeName }}Content) GetKey() *datastore.Key {
+	return d.key
+}
+
+func (d *{{ .TypeName }}Content) SetKey(k *datastore.Key) {
+	d.key = k
 }
 
 {{ end }}

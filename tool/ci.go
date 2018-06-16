@@ -37,7 +37,9 @@ func lock() bool {
 }
 
 func unlock() {
-	lastUnixTime = time.Now().Unix()
+	now := time.Now()
+	fmt.Println(now)
+	lastUnixTime = now.Unix()
 }
 
 func circuit() error {

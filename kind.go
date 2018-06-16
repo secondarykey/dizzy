@@ -16,7 +16,7 @@ type Kind struct {
 	KindName string
 	URL      string
 	Cache    bool
-	Content  Content
+	Content  bool
 	Limit    int
 	Owner   *ast.StructType
 	Fields   []*Field
@@ -107,7 +107,7 @@ func NewKind(line string, t *ast.TypeSpec) (*Kind,error) {
 	defName := name
 	defURL := name
 	defCache := true
-	defContent := ContentNone
+	defContent := false
 	defLimit := 10
 
 	var liner Liner
@@ -145,8 +145,12 @@ func NewKind(line string, t *ast.TypeSpec) (*Kind,error) {
 				fmt.Printf("cache parse error(bool value)[%s]\n", val)
 			}
 		case "content":
-			ct := ContentNone
-			defContent = ct.Value(val)
+			content, err := strconv.ParseBool(val)
+			if err == nil {
+				defContent = content
+			} else {
+				fmt.Printf("content parse error(bool value)[%s]\n", val)
+			}
 		case "limit":
 			limit, err := strconv.ParseInt(val, 10, 64)
 			if err == nil {
