@@ -29,10 +29,12 @@ var lastUnixTime int64
 func lock() bool {
 
 	now := time.Now().Unix()
-	dur := int64(1)
+	dur := int64(2)
 	if now > lastUnixTime + dur {
 		return true
 	}
+
+	fmt.Println(now)
 	return false
 }
 
@@ -56,6 +58,8 @@ func circuit() error {
 	}
 
 	done := make(chan error)
+	ci := make(chan bool)
+
 	go func() {
 		for {
 			select {
@@ -68,6 +72,7 @@ func circuit() error {
 				case event.Op&fsnotify.Write == fsnotify.Write:
 				default:
 				}
+
 
 				fname := event.Name
 				if fname == "template.go" {
@@ -83,13 +88,7 @@ func circuit() error {
 					continue
 				}
 
-				if lock() {
-					err := runTest()
-					if err != nil {
-						done <- err
-					}
-					unlock()
-				}
+				ci <- true
 
 			case err := <-watcher.Errors:
 				done <- err
@@ -100,9 +99,32 @@ func circuit() error {
 	//手入力終了待ち受け
 	go func() {
 		stdin := bufio.NewScanner(os.Stdin)
-		stdin.Scan()
-		os.Exit(0)
+
+		for {
+			stdin.Scan()
+			if stdin.Text() == "quit" {
+				os.Exit(0)
+			} else {
+				ci <- true
+			}
+		}
+
 	}()
+
+	go func() {
+		for <-ci {
+			if lock() {
+				err := runTest()
+				if err != nil {
+					done <- err
+				}
+				unlock()
+			}
+		}
+	}()
+
+	//一回処理
+	ci <- true
 
 	return <-done
 }
